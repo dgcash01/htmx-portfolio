@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dan C - Web Developer Portfolio</title>
+    
+    <script src="https://unpkg.com/htmx.org@1.9.10" integrity="sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC" crossorigin="anonymous"></script>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        /* Simple fade-in animation for htmx swaps */
+        @keyframes fade-in {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .fade-in {
+            opacity: 0;
+            animation: fade-in 0.5s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-300 font-sans">
+
+    <div class="container mx-auto max-w-4xl p-4">
+
+        <header class="bg-slate-800/50 backdrop-blur-sm rounded-xl sticky top-4 z-10">
+            <nav class="flex justify-between items-center p-4">
+                <div class="text-2xl font-bold text-white">
+                    <a href="/">Dan C.</a>
+                </div>
+                <div class="flex space-x-6 text-lg">
+                    <button hx-get="/partials/about.html" hx-target="#content" hx-swap="innerHTML" class="hover:text-cyan-400 transition-colors duration-300">
+                        About
+                    </button>
+                    <button hx-get="/partials/projects.html" hx-target="#content" hx-swap="innerHTML" class="hover:text-cyan-400 transition-colors duration-300">
+                        Projects
+                    </button>
+                </div>
+            </nav>
+        </header>
+
+        <main id="content" class="py-12">
+            <div hx-get="/partials/about.html" hx-trigger="load" class="fade-in">
+                <p class="text-center">Loading...</p>
+            </div>
+        </main>
+
+        <footer class="text-center text-slate-500 py-6">
+            <p>&copy; 2025 Dan C. All Rights Reserved.</p>
+            <p>Made with htmx & Tailwind CSS</p>
+        </footer>
+
+    </div>
+</body>
+</html>
