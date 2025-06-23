@@ -34,60 +34,20 @@
             animation: content-entry-animation var(--anim-duration-medium) var(--anim-easing) forwards;
         }
 
-        /* Class to apply to swapped content for htmx to pick up */
-        /* HTMX adds 'htmx-added' then swaps to 'htmx-settling' then removes it. */
-        /* We can target 'htmx-added' but then the element needs to be visible initially */
-        /* It's better to have a class on the partial root and htmx swaps the whole thing */
-        /* The .content-entry class will be on the root of each partial */
-
         .nav-active {
             @apply text-cyan-400 font-semibold;
         }
-    </style>
-</head>
-<body class="bg-slate-900 text-slate-300 font-['Inter',_sans-serif]">
-
-    <div class="container mx-auto max-w-4xl p-4">
-
-        <header class="bg-slate-800/50 backdrop-blur-sm rounded-xl sticky top-4 z-10">
-            <nav class="flex justify-between items-center p-4">
-                <div class="text-2xl font-bold text-white">
-                    <a href="/">Dan C.</a>
-                </div>
-                <div class="flex space-x-6 text-lg">
-                    <button id="nav-about" hx-get="/partials/about.html" hx-target="#content" hx-swap="innerHTML" class="hover:text-cyan-400 transition-colors duration-300">
-                        About
-                    </button>
-                    <button id="nav-projects" hx-get="/partials/projects.html" hx-target="#content" hx-swap="innerHTML" class="hover:text-cyan-400 transition-colors duration-300">
-                        Projects
-                    </button>
-                </div>
-            </nav>
-        </header>
 
         /* Loading Indicator Styles */
-        /* The #page-loader is the htmx-indicator */
         #page-loader.htmx-indicator {
             display: none;
             opacity: 0;
             transition: opacity var(--anim-duration-fast) ease-in-out;
         }
-        /* When body has .htmx-request, show the #page-loader */
         body.htmx-request #page-loader.htmx-indicator {
             display: flex;
             opacity: 1;
         }
-        /* Fallback if an indicator is placed inside a target that itself gets htmx-request */
-        .htmx-request .htmx-indicator:not(#page-loader) {
-            display: flex;
-            opacity: 1;
-        }
-        .htmx-request.htmx-swap-target .htmx-indicator {
-             /* If a local indicator is inside the target, it might be swapped out.
-                The global #page-loader avoids this issue.
-                For now, we'll have one general indicator. */
-        }
-
         @keyframes pulse-dot {
             0%, 100% { opacity: 1; transform: scale(1); }
             50% { opacity: 0.5; transform: scale(0.8); }
@@ -134,6 +94,15 @@
 </head>
 <body class="bg-slate-900 text-slate-300 font-['Inter',_sans-serif]">
 
+    <!-- General Loading Indicator -->
+    <div id="page-loader" class="htmx-indicator fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="flex space-x-2">
+            <div class="w-3 h-3 bg-cyan-400 rounded-full pulse-dot-1"></div>
+            <div class="w-3 h-3 bg-cyan-400 rounded-full pulse-dot-2"></div>
+            <div class="w-3 h-3 bg-cyan-400 rounded-full pulse-dot-3"></div>
+        </div>
+    </div>
+
     <!-- Modal Structure -->
     <div id="project-modal" class="modal-overlay">
         <div class="modal-content">
@@ -148,7 +117,6 @@
     <div class="container mx-auto max-w-4xl p-4">
 
         <header class="bg-slate-800/50 backdrop-blur-sm rounded-xl sticky top-4 z-10">
-            <!-- ... nav ... -->
             <nav class="flex justify-between items-center p-4">
                 <div class="text-2xl font-bold text-white">
                     <a href="/">Dan C.</a>
@@ -164,21 +132,11 @@
             </nav>
         </header>
 
-        <!-- General Loading Indicator - Placed once, shown by htmx-request class on body or a parent -->
-        <div id="page-loader" class="htmx-indicator fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50">
-            <div class="flex space-x-2">
-                <div class="w-3 h-3 bg-cyan-400 rounded-full pulse-dot-1"></div>
-                <div class="w-3 h-3 bg-cyan-400 rounded-full pulse-dot-2"></div>
-                <div class="w-3 h-3 bg-cyan-400 rounded-full pulse-dot-3"></div>
-            </div>
-        </div>
-
         <main id="content" class="py-12">
-            <!-- The div that htmx targets for initial load. Content will be swapped here. -->
-            <!-- The htmx-indicator is now global, so the "Loading content..." p is not strictly needed here. -->
-            <!-- htmx will add 'htmx-request' to body by default for global indicator -->
+            <!-- The initial content will be loaded here by htmx -->
+            <!-- The old class="fade-in" and "Loading..." p tag are removed -->
             <div hx-get="/partials/about.html" hx-trigger="load" hx-swap="innerHTML">
-                <!-- This content will be replaced by the actual partial or the loader if request takes time -->
+                <!-- Content will be replaced by partial or loader -->
             </div>
         </main>
 
@@ -205,9 +163,8 @@
             }
 
             // Listen for htmx content settlement (after swap and processing)
-            // Used for nav state and card animations
             contentArea.addEventListener('htmx:afterSettle', function (event) {
-                const swappedUrl = event.detail.xhr?.responseURL || event.detail.pathInfo?.path || ""; // Get URL from XHR or pathInfo
+                const swappedUrl = event.detail.xhr?.responseURL || event.detail.pathInfo?.path || "";
 
                 if (swappedUrl) {
                     updateNavActiveState(swappedUrl);
@@ -216,7 +173,6 @@
                     if (swappedUrl.includes('projects.html')) {
                         const projectCards = contentArea.querySelectorAll('.project-card');
                         projectCards.forEach((card, index) => {
-                            // Ensure cards are initially hidden by style or a class like 'animated-card'
                             card.classList.add('animated-card');
                             setTimeout(() => {
                                 card.classList.add('is-visible');
@@ -227,20 +183,11 @@
             });
 
             // Initial state update for page load
-            // htmx:afterSettle on #content will also fire for the initial hx-trigger="load"
-            // so the logic above should handle the initial state for nav and cards if projects.html is default.
-            // If about.html is default, nav will be set, and cards won't animate until projects is loaded.
-            // To explicitly set initial nav for non-htmx loaded initial state (if any), or to be very sure:
             const initialLoadTrigger = contentArea.querySelector('div[hx-trigger="load"]');
             if (initialLoadTrigger) {
                 const initialPath = initialLoadTrigger.getAttribute('hx-get');
                 if (initialPath) {
-                    // Call updateNavActiveState directly for the initial load,
-                    // as htmx:afterSettle might not have the XHR object in the same way for the "load" trigger.
                     updateNavActiveState(initialPath);
-
-                    // If the initial page is projects, manually trigger animation after a brief delay
-                    // to ensure content is rendered. The htmx:afterSettle should ideally cover this.
                     if (initialPath.includes('projects.html')) {
                         setTimeout(() => {
                             const projectCards = contentArea.querySelectorAll('.project-card');
@@ -250,7 +197,7 @@
                                     card.classList.add('is-visible');
                                 }, 100 * index);
                             });
-                        }, 50); // Small delay for safety on initial load
+                        }, 50);
                     }
                 }
             }
@@ -258,17 +205,16 @@
             // Modal Handling
             const projectModal = document.getElementById('project-modal');
             const modalCloseButton = document.getElementById('modal-close-button');
-            const modalContentTarget = document.getElementById('modal-content-target');
+            // const modalContentTarget = document.getElementById('modal-content-target'); // Not directly used in this scope
 
             function openModal() {
-                projectModal.classList.add('active');
-                // Optional: trap focus within modal, handle Esc key
+                if (projectModal) projectModal.classList.add('active');
             }
 
             function closeModal() {
-                projectModal.classList.remove('active');
-                // Clear content after close to ensure fresh load next time, or if content is large
-                // modalContentTarget.innerHTML = '<p>Loading project details...</p>';
+                if (projectModal) projectModal.classList.remove('active');
+                // Optionally clear modal content:
+                // if (modalContentTarget) modalContentTarget.innerHTML = '<p>Loading project details...</p>';
             }
 
             window.openModal = openModal; // Make it globally accessible for htmx hx-on
@@ -279,16 +225,14 @@
 
             if (projectModal) {
                 projectModal.addEventListener('click', function(event) {
-                    // Close if clicked on overlay, not on modal content itself
-                    if (event.target === projectModal) {
+                    if (event.target === projectModal) { // Click on overlay specifically
                         closeModal();
                     }
                 });
             }
 
-            // Handle Esc key to close modal
             document.addEventListener('keydown', function(event) {
-                if (event.key === 'Escape' && projectModal.classList.contains('active')) {
+                if (event.key === 'Escape' && projectModal && projectModal.classList.contains('active')) {
                     closeModal();
                 }
             });
